@@ -19,12 +19,14 @@ import Brightness4Icon from '@mui/icons-material/Brightness4'; // Dark Mode Icon
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useColorMode } from '../ThemeContext'; // Import your hook
+import { text } from 'stream/consumers';
 
 const drawerWidth = 240;
 
 const menuItems = [
     { text: 'Home', icon: <HomeIcon />, path: '/' },
     { text: 'Neural Network', icon: <AnimationIcon />, path: '/components/neural-network' },
+    { text: 'World Tree', icon: <AnimationIcon />, path: '/components/worldtree' },
 ];
 
 export default function Sidebar() {
