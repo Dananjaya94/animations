@@ -1,10 +1,9 @@
-import WorldTreeEngine from "./worldtree";
+import Singularity from "./singularity";
 
-
-export default function WorldTreePage() {
+export default function SingularityPage() {
     return (
         <div style={{ width: '100', height: 'calc(100vh - 48px)', position: 'relative' }}>
-            <WorldTreeEngine />
+            <Singularity />
         </div>
     );
 }

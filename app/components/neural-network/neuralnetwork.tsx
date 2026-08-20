@@ -227,6 +227,40 @@ void main() {
     gl_FragColor = vec4(finalColor, alpha);
 }`;
 
+interface NodeConnection {
+    node: Node;
+    strength: number;
+}
+
+class Node {
+    position: THREE.Vector3;
+    connections: NodeConnection[];
+    level: number;
+    type: number;
+    size: number;
+    distanceFromRoot: number;
+    helixIndex?: number;
+    helixT?: number;
+
+    constructor(position: THREE.Vector3, level = 0, type = 0) {
+        this.position = position;
+        this.connections = [];
+        this.level = level;
+        this.type = type;
+        this.size = type === 0 ? THREE.MathUtils.randFloat(0.8, 1.4) : THREE.MathUtils.randFloat(0.5, 1.0);
+        this.distanceFromRoot = 0;
+    }
+    addConnection(node: Node, strength = 1.0) {
+        if (!this.isConnectedTo(node)) {
+            this.connections.push({ node, strength });
+            node.connections.push({ node: this, strength });
+        }
+    }
+    isConnectedTo(node: Node) {
+        return this.connections.some(conn => conn.node === node);
+    }
+}
+
 export default function NeuralNetwork() {
     // We do NOT use the theme here anymore for colors.
     // The animation will stay DARK regardless of the Sidebar/App theme.
@@ -245,35 +279,8 @@ export default function NeuralNetwork() {
     const nodesMeshRef = useRef<THREE.Points | null>(null);
     const connectionsMeshRef = useRef<THREE.LineSegments | null>(null);
     const configRef = useRef({ paused: false, activePaletteIndex: 0, currentFormation: 0, densityFactor: 1 });
-
-    class Node {
-        position: THREE.Vector3;
-        connections: any[];
-        level: number;
-        type: number;
-        size: number;
-        distanceFromRoot: number;
-        helixIndex?: number;
-        helixT?: number;
-
-        constructor(position: THREE.Vector3, level = 0, type = 0) {
-            this.position = position;
-            this.connections = [];
-            this.level = level;
-            this.type = type;
-            this.size = type === 0 ? THREE.MathUtils.randFloat(0.8, 1.4) : THREE.MathUtils.randFloat(0.5, 1.0);
-            this.distanceFromRoot = 0;
-        }
-        addConnection(node: Node, strength = 1.0) {
-            if (!this.isConnectedTo(node)) {
-                this.connections.push({ node, strength });
-                node.connections.push({ node: this, strength });
-            }
-        }
-        isConnectedTo(node: Node) {
-            return this.connections.some(conn => conn.node === node);
-        }
-    }
+    const recreateNNRef = useRef<(() => void) | null>(null);
+    const resetCameraRef = useRef<(() => void) | null>(null);
 
     // Effect to initialize Three.js
     useEffect(() => {
@@ -365,7 +372,7 @@ export default function NeuralNetwork() {
 
         const generateNetwork = (formationIndex: number, densityFactor: number) => {
             let nodes: Node[] = [];
-            let rootNode = new Node(new THREE.Vector3(0, 0, 0), 0, 0);
+            const rootNode = new Node(new THREE.Vector3(0, 0, 0), 0, 0);
 
             const generateCrystallineSphere = () => {
                 rootNode.size = 2.0;
@@ -578,7 +585,7 @@ export default function NeuralNetwork() {
             const processed = new Set();
 
             network.nodes.forEach((node, idx) => {
-                node.connections.forEach((c: any) => {
+                node.connections.forEach((c: NodeConnection) => {
                     const other = c.node;
                     const otherIdx = network.nodes.indexOf(other);
                     const key = [Math.min(idx, otherIdx), Math.max(idx, otherIdx)].join('-');
@@ -693,9 +700,9 @@ export default function NeuralNetwork() {
         };
         window.addEventListener('resize', handleResize);
 
-        (window as any).recreateNN = createVisualization;
+        recreateNNRef.current = createVisualization;
 
-        (window as any).resetCamera = () => {
+        resetCameraRef.current = () => {
             controls.reset();
             controls.autoRotate = false;
             setTimeout(() => { controls.autoRotate = true; }, 2000);
@@ -712,19 +719,18 @@ export default function NeuralNetwork() {
     useEffect(() => {
         configRef.current.activePaletteIndex = activeTheme;
         configRef.current.densityFactor = density / 100;
-        configRef.current.paused = paused;
-        if ((window as any).recreateNN) (window as any).recreateNN();
+        recreateNNRef.current?.();
     }, [activeTheme, density]);
 
     useEffect(() => { configRef.current.paused = paused; }, [paused]);
 
     const handleMorph = () => {
         configRef.current.currentFormation = (configRef.current.currentFormation + 1) % 3;
-        if ((window as any).recreateNN) (window as any).recreateNN();
+        recreateNNRef.current?.();
     };
 
     const handleReset = () => {
-        if ((window as any).resetCamera) (window as any).resetCamera();
+        resetCameraRef.current?.();
     };
 
     return (

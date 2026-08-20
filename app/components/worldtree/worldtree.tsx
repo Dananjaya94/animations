@@ -398,6 +398,32 @@ void main() {
 }
 `;
 
+const themes = [
+    {
+        name: "Pheonix",
+        base: 0x4a3324, // ✅ Darker brown base
+        tip: 0x335522,  // ✅ Darker green tip
+        leaf: 0x44cc44, pulse: 0xaaffff,
+        darkSoil: 0x3b2e25, lightSoil: 0x5c4433, grass: 0x226611, rock: 0x554433,
+        skyTop: 0x004488, skyHorizon: 0x66ccff, skyBottom: 0x000510, fog: 0x66ccff,
+        sunColor: 0xffffee
+    },
+    {
+        name: "Autumn",
+        base: 0x332211, tip: 0xcc5500, leaf: 0xffaa00, pulse: 0xffdd88,
+        darkSoil: 0x2a1d15, lightSoil: 0x443322, grass: 0x885522, rock: 0x5a4a3a,
+        skyTop: 0x441100, skyHorizon: 0xff8844, skyBottom: 0x110500, fog: 0xff8844,
+        sunColor: 0xffaa00
+    },
+    {
+        name: "Mystic",
+        base: 0x110022, tip: 0x8800ff, leaf: 0xcc88ff, pulse: 0xff00ff,
+        darkSoil: 0x100a18, lightSoil: 0x221133, grass: 0x440066, rock: 0x2a1a3a,
+        skyTop: 0x110033, skyHorizon: 0x00ffff, skyBottom: 0x000000, fog: 0x00ffff,
+        sunColor: 0x00ffff
+    },
+];
+
 export default function WorldTreeEngine() {
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -415,6 +441,8 @@ export default function WorldTreeEngine() {
     const groundMeshRef = useRef<THREE.Mesh | null>(null);
     const skyMeshRef = useRef<THREE.Mesh | null>(null);
     const cloudMeshRef = useRef<THREE.Mesh | null>(null);
+    const rebuildTreeRef = useRef<(() => void) | null>(null);
+    const updateTreeThemeRef = useRef<((themeIdx: number) => void) | null>(null);
 
     const configRef = useRef({
         growth: 6,
@@ -424,32 +452,6 @@ export default function WorldTreeEngine() {
         // Sun Position Configuration
         sunPosition: new THREE.Vector3(100, 50, -100).normalize()
     });
-
-    const themes = [
-        {
-            name: "Yggdrasil",
-            base: 0x4a3324, // ✅ Darker brown base
-            tip: 0x335522,  // ✅ Darker green tip
-            leaf: 0x44cc44, pulse: 0xaaffff,
-            darkSoil: 0x3b2e25, lightSoil: 0x5c4433, grass: 0x226611,
-            skyTop: 0x004488, skyHorizon: 0x66ccff, skyBottom: 0x000510, fog: 0x66ccff,
-            sunColor: 0xffffee
-        },
-        {
-            name: "Autumn",
-            base: 0x332211, tip: 0xcc5500, leaf: 0xffaa00, pulse: 0xffdd88,
-            darkSoil: 0x2a1d15, lightSoil: 0x443322, grass: 0x885522,
-            skyTop: 0x441100, skyHorizon: 0xff8844, skyBottom: 0x110500, fog: 0xff8844,
-            sunColor: 0xffaa00
-        },
-        {
-            name: "Mystic",
-            base: 0x110022, tip: 0x8800ff, leaf: 0xcc88ff, pulse: 0xff00ff,
-            darkSoil: 0x100a18, lightSoil: 0x221133, grass: 0x440066,
-            skyTop: 0x110033, skyHorizon: 0x00ffff, skyBottom: 0x000000, fog: 0x00ffff,
-            sunColor: 0x00ffff
-        },
-    ];
 
     useEffect(() => {
         if (!containerRef.current || !canvasRef.current) return;
@@ -761,8 +763,8 @@ export default function WorldTreeEngine() {
         };
         window.addEventListener('resize', handleResize);
 
-        (window as any).rebuildWorldTree = rebuildTree;
-        (window as any).updateTreeTheme = (themeIdx: number) => {
+        rebuildTreeRef.current = rebuildTree;
+        updateTreeThemeRef.current = (themeIdx: number) => {
             const t = themes[themeIdx];
             treeUniforms.uBaseColor.value.setHex(t.base);
             treeUniforms.uTipColor.value.setHex(t.tip);
@@ -787,9 +789,8 @@ export default function WorldTreeEngine() {
             if (cloudMeshRef.current) {
                 (cloudMeshRef.current.material as THREE.ShaderMaterial).uniforms.uSunColor.value.setHex(t.sunColor);
             }
-            if (sceneRef.current) {
-                // @ts-ignore
-                sceneRef.current.fog.color.setHex(t.fog);
+            if (sceneRef.current?.fog) {
+                (sceneRef.current.fog as THREE.FogExp2).color.setHex(t.fog);
             }
         };
 
@@ -806,23 +807,21 @@ export default function WorldTreeEngine() {
         const prevGrowth = configRef.current.growth;
         configRef.current.growth = growthLevel;
         configRef.current.speed = flowSpeed;
-        if (prevGrowth !== growthLevel && (window as any).rebuildWorldTree) {
-            (window as any).rebuildWorldTree();
+        if (prevGrowth !== growthLevel) {
+            rebuildTreeRef.current?.();
         }
     }, [growthLevel, flowSpeed]);
 
     useEffect(() => {
         configRef.current.themeIndex = activeTheme;
-        if ((window as any).updateTreeTheme) {
-            (window as any).updateTreeTheme(activeTheme);
-        }
+        updateTreeThemeRef.current?.(activeTheme);
     }, [activeTheme]);
 
     return (
         <div className="wt-container" ref={containerRef}>
             <div className="glass-panel" style={{ top: 32, left: 32, padding: 24 }}>
                 <div style={{ fontWeight: 600, fontSize: 20, marginBottom: 8, background: 'linear-gradient(135deg, #fff 30%, #a5b4fc 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                    Yggdrasil Engine
+                    Peonix Engine
                 </div>
                 <div style={{ fontSize: 14, opacity: 0.7 }}>
                     Click the ground to channel energy.
