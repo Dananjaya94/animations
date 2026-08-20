@@ -30,10 +30,82 @@
     /* Ensure clicks register */
 }
 
+/* Panel layout (was inline styles) */
+.wt-panel-title {
+    top: 32px;
+    left: 32px;
+    padding: 24px;
+    max-width: calc(100vw - 64px);
+}
+
+.wt-panel-controls {
+    top: 32px;
+    right: 32px;
+    padding: 24px;
+    width: 240px;
+    max-width: calc(100vw - 64px);
+}
+
+.wt-title {
+    font-weight: 600;
+    font-size: 20px;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #fff 30%, #a5b4fc 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.wt-hint {
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+.wt-label {
+    font-size: 12px;
+    letter-spacing: 2px;
+    opacity: 0.7;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+.wt-label-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.wt-label-spaced {
+    margin-top: 16px;
+}
+
+.wt-theme-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+/* Narrow viewports: stack the panels instead of letting them collide */
+@media (max-width: 640px) {
+    .wt-panel-title,
+    .wt-panel-controls {
+        left: 16px;
+        right: 16px;
+        top: 16px;
+        width: auto;
+    }
+
+    .wt-panel-controls {
+        top: auto;
+        bottom: 16px;
+    }
+}
+
 /* Theme Buttons */
 .theme-button {
     width: 40px;
     height: 40px;
+    padding: 0;
     border-radius: 50%;
     border: 2px solid rgba(255, 255, 255, 0.2);
     cursor: pointer;
@@ -43,6 +115,11 @@
 .theme-button:hover {
     transform: scale(1.1);
     border-color: rgba(255, 255, 255, 0.8);
+}
+
+.theme-button:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 3px;
 }
 
 .theme-button.active {
@@ -75,6 +152,11 @@
 .control-slider::-webkit-slider-thumb:hover {
     transform: scale(1.2);
     box-shadow: 0 0 15px rgba(100, 200, 255, 0.8);
+}
+
+.control-slider:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 4px;
 }
 
 /* Bottom Controls */
